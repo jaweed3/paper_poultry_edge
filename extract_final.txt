@@ -1,0 +1,27 @@
+Starting at 12:08:57
+Loading dataset...
+Loaded! Train=7016 Test=1754
+Label map: {0: 'cocci', 1: 'healthy', 2: 'ncd', 3: 'salmo'}
+Processing train (7016)...
+  train: 0/7016
+  train: 1000/7016
+  train: 2000/7016
+  train: 3000/7016
+  train: 4000/7016
+  train: 5000/7016
+  train: 6000/7016
+  train: 7000/7016
+  train/cocci: 2141
+  train/healthy: 2037
+  train/ncd: 576
+  train/salmo: 2262
+  train TOTAL: 7016
+Processing test (1754)...
+  test: 0/1754
+  test: 1000/1754
+  test/cocci: 535
+  test/healthy: 509
+  test/ncd: 144
+  test/salmo: 566
+  test TOTAL: 1754
+DONE at 12:14:25
