@@ -1,0 +1,96 @@
+{
+  "total": 6812,
+  "per_class": {
+    "cocci": 2103,
+    "healthy": 2057,
+    "salmo": 2276,
+    "ncd": 376
+  },
+  "per_class_pct": {
+    "cocci": 30.87,
+    "healthy": 30.19,
+    "salmo": 33.41,
+    "ncd": 5.52
+  },
+  "source": "Zenodo 4628934 (Machuve et al. 2021) - verified via https://zenodo.org/api/records/4628934",
+  "files": {
+    "cocci.zip": 2103,
+    "healthy.zip": 2057,
+    "salmo.zip": 2276,
+    "ncd.zip": 376,
+    "imgSegmentation.zip": 2862560141
+  },
+  "note": "Local data/ still empty - dataset not yet downloaded due to Zenodo 403 rate-limit. Stats above are ground truth from API.",
+  "local_scanned": {
+    "total": 0,
+    "per_class": {},
+    "scanned_root": "/Users/wedjaw/research/paper_poultry_edge/data"
+  },
+  "hf_dataset": {
+    "id": "Dianyo/poultry-fecal-fl",
+    "train": 7016,
+    "test": 1754,
+    "total": 8770,
+    "lab_split_actual": {
+      "train": 5614,
+      "val": 1402,
+      "test": 1754,
+      "total": 8770
+    },
+    "note": "Lab used HF Dianyo/poultry-fecal-fl (7016+1754) which appears to be augmented/upsampled from Zenodo 6812. Zenodo raw is 6812 (cocci 2103, healthy 2057, salmo 2276, ncd 376). HF adds ~1958 images (likely augmentation). Paper must cite HF as source and note discrepancy."
+  },
+  "int8_real_accuracy": {
+    "mobilenetv2": {
+      "fp32_acc": 97.2064,
+      "fp32_per_class": {
+        "cocci": 98.5,
+        "healthy": 97.25,
+        "ncd": 90.97,
+        "salmo": 97.53
+      },
+      "int8_acc": 97.4344,
+      "int8_per_class": {
+        "cocci": 97.94,
+        "healthy": 97.25,
+        "ncd": 93.75,
+        "salmo": 98.06
+      },
+      "drop": -0.2281
+    },
+    "shufflenetv2": {
+      "fp32_acc": 97.2064,
+      "fp32_per_class": {
+        "cocci": 97.38,
+        "healthy": 97.45,
+        "ncd": 93.06,
+        "salmo": 97.88
+      },
+      "int8_acc": 97.2634,
+      "int8_per_class": {
+        "cocci": 97.57,
+        "healthy": 97.64,
+        "ncd": 91.67,
+        "salmo": 98.06
+      },
+      "drop": -0.057
+    },
+    "efficientnet_b0": {
+      "fp32_acc": 98.1756,
+      "fp32_per_class": {
+        "cocci": 98.13,
+        "healthy": 98.23,
+        "ncd": 93.75,
+        "salmo": 99.29
+      },
+      "int8_acc": 35.4618,
+      "int8_per_class": {
+        "cocci": 37.2,
+        "healthy": 59.33,
+        "ncd": 81.94,
+        "salmo": 0.53
+      },
+      "drop": 62.7138
+    }
+  },
+  "int8_finding": "EB0 collapses 62.7% under INT8 dynamic PTQ (98.17->35.46%), while MN2 and SNV2 are robust (drop -0.22% and -0.05% - actually slight gain due to noise). EB0 uses SE blocks and compound scaling - highly sensitive to quantization. This is a major finding for paper."
+}

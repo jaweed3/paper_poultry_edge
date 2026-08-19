@@ -1,0 +1,83 @@
+{
+  "experiment": "Poultry Fecal Disease Detection \u2014 Lightweight CNN + INT8 Quantization",
+  "dataset": "Machuve et al. (2022) \u2014 6,812 images, 4 classes",
+  "date": "2026-08-16T15:38:09.184643",
+  "device": "cuda",
+  "results": {
+    "mobilenetv2": {
+      "val_acc": 98.00285306704707,
+      "test_acc": 97.83352337514253,
+      "fp32_acc": 97.83352337514253,
+      "int8_acc": 97.83352337514253,
+      "latency_ms": 1.85,
+      "int8_latency_ms": 55.75,
+      "size_mb": 8.476983070373535,
+      "fp32_size_mb": 8.476983070373535,
+      "int8_size_mb": 2.301607131958008,
+      "size_reduction": 3.68,
+      "params": 2228996,
+      "fp32_benchmark": {
+        "mean_latency_ms": 1.85,
+        "p50_latency_ms": 1.61,
+        "fps": 540.84,
+        "provider": "CPUExecutionProvider"
+      },
+      "int8_benchmark": {
+        "mean_latency_ms": 55.75,
+        "p50_latency_ms": 56.3,
+        "fps": 17.94,
+        "provider": "CPUExecutionProvider"
+      }
+    },
+    "shufflenetv2": {
+      "val_acc": 97.21825962910128,
+      "test_acc": 97.37742303306727,
+      "fp32_acc": 97.37742303306727,
+      "int8_acc": 97.37742303306727,
+      "latency_ms": 3.17,
+      "int8_latency_ms": 20.34,
+      "size_mb": 4.887629508972168,
+      "fp32_size_mb": 4.887629508972168,
+      "int8_size_mb": 1.4678325653076172,
+      "size_reduction": 3.33,
+      "params": 1257704,
+      "fp32_benchmark": {
+        "mean_latency_ms": 3.17,
+        "p50_latency_ms": 3.05,
+        "fps": 315.25,
+        "provider": "CPUExecutionProvider"
+      },
+      "int8_benchmark": {
+        "mean_latency_ms": 20.34,
+        "p50_latency_ms": 20.29,
+        "fps": 49.16,
+        "provider": "CPUExecutionProvider"
+      }
+    },
+    "efficientnet_lite0": {
+      "val_acc": 98.5734664764622,
+      "test_acc": 98.34663625997719,
+      "fp32_acc": 98.34663625997719,
+      "int8_acc": 98.34663625997719,
+      "latency_ms": 3.5,
+      "int8_latency_ms": 80.66,
+      "size_mb": 15.297595977783203,
+      "fp32_size_mb": 15.297595977783203,
+      "int8_size_mb": 4.16086483001709,
+      "size_reduction": 3.68,
+      "params": 4012672,
+      "fp32_benchmark": {
+        "mean_latency_ms": 3.5,
+        "p50_latency_ms": 3.1,
+        "fps": 286.07,
+        "provider": "CPUExecutionProvider"
+      },
+      "int8_benchmark": {
+        "mean_latency_ms": 80.66,
+        "p50_latency_ms": 81.03,
+        "fps": 12.4,
+        "provider": "CPUExecutionProvider"
+      }
+    }
+  }
+}

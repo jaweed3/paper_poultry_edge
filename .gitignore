@@ -1,0 +1,11 @@
+data/
+models/
+logs/
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+wandb/
+.ipynb_checkpoints/
+results/dataset_stats.json
+.DS_Store
