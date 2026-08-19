@@ -1,1 +1,0 @@
-python: can't open file 'C:\\Users"MASTER': [Errno 22] Invalid argument

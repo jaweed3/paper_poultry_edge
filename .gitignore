@@ -7,5 +7,6 @@ __pycache__/
 *.egg-info/
 wandb/
 .ipynb_checkpoints/
-results/dataset_stats.json
+*.zip
+*.b64
 .DS_Store

@@ -12,7 +12,7 @@ DATA_TEST = PROJECT / "data" / "images" / "test"
 MODELS = {
     "mobilenetv2": ("mobilenetv2_fp32.onnx", "mobilenetv2_int8.onnx"),
     "shufflenetv2": ("shufflenetv2_fp32.onnx", "shufflenetv2_int8.onnx"),
-    "efficientnet_b0": ("efficientnet_lite0_fp32.onnx", "efficientnet_lite0_int8.onnx"),
+    "efficientnet_b0": ("efficientnet_b0_fp32.onnx", "efficientnet_b0_int8.onnx"),
 }
 CLASS_NAMES = ["cocci", "healthy", "ncd", "salmo"]
 CLS2IDX = {c:i for i,c in enumerate(CLASS_NAMES)}

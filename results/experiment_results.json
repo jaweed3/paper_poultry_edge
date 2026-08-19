@@ -54,7 +54,7 @@
         "provider": "CPUExecutionProvider"
       }
     },
-    "efficientnet_lite0": {
+    "efficientnet_b0": {
       "val_acc": 98.5734664764622,
       "test_acc": 98.34663625997719,
       "fp32_acc": 98.34663625997719,
