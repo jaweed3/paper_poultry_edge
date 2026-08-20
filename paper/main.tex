@@ -66,7 +66,7 @@ INT8 quantization reduces model size by representing weights with 8-bit integers
 We use the Machuve~\textit{et al.}~dataset~\cite{machuve22} with PCR-verified fecal images from Tanzanian farms, as distributed via HuggingFace~\texttt{Dianyo/poultry-fecal-fl}. The HF split has 8,770 images (5,614 train / 1,402 val / 1,754 test, stratified) derived from Zenodo 4628934 (6,812 images: cocci 2,103, healthy 2,057, salmo 2,276, ncd 376); 1,958 additional images are augmented copies. Classes are Coccidiosis (30.7\%), Healthy (29.2\%), Salmonella (32.5\%), and Newcastle Disease (8.3\% raw; 5.5\% of Zenodo). NCD is underrepresented; we report per-class INT8 accuracy as a limitation. Images are resized to 224$\times$224 and normalized with ImageNet mean/std.
 
 \subsection{Model Architectures}
-We evaluate three ImageNet-pretrained lightweight architectures with the classification head replaced for four classes. MobileNetV2~\cite{mobilenetv2} (2.2M parameters) uses inverted residuals with depthwise separable convolutions for efficient local feature extraction. ShuffleNetV2~\cite{shufflenetv2} (1.3M parameters) relies on channel shuffle for cross-channel mixing with few parameters. EfficientNet-B0~\cite{efficientnet} (4.0M parameters) applies compound scaling with squeeze-and-excitation blocks to capture multi-scale features.
+We evaluate three ImageNet~\cite{deng2009}-pretrained lightweight architectures with the classification head replaced for four classes. MobileNetV2~\cite{mobilenetv2} (2.2M parameters) uses inverted residuals with depthwise separable convolutions for efficient local feature extraction. ShuffleNetV2~\cite{shufflenetv2} (1.3M parameters) relies on channel shuffle for cross-channel mixing with few parameters. EfficientNet-B0~\cite{efficientnet} (4.0M parameters) applies compound scaling with squeeze-and-excitation blocks to capture multi-scale features.
 
 \subsection{Training Protocol}
 All models are trained for 50 epochs using Adam optimizer (learning rate $10^{-4}$, weight decay $10^{-4}$) with cosine annealing schedule. Batch size is 32, input resolution $224 \times 224$. Data augmentation includes random horizontal flip, rotation ($\pm 15^\circ$), and color jitter. Training is performed on an NVIDIA RTX 4060 GPU with 8\,GB VRAM using PyTorch 2.5.1 with CUDA 12.1.
@@ -211,7 +211,7 @@ The gap between best and worst accuracy is only 0.9\% (97.4\% versus 98.3\%); ha
 \label{fig:gradcam}
 \end{figure}
 
-Grad-CAM analysis (Fig.~\ref{fig:gradcam}) reveals architecture-specific feature learning patterns. MobileNetV2 focuses on color gradients---consistent with its depthwise convolution design that excels at local texture features. EfficientNet-B0's squeeze-and-excitation blocks enable attention to multi-scale diagnostic regions, which contributes to its superior accuracy. ShuffleNetV2's channel shuffle mechanism distributes attention more broadly across the image.
+Grad-CAM analysis~\cite{selvaraju2017} (Fig.~\ref{fig:gradcam}) reveals architecture-specific feature learning patterns. MobileNetV2 focuses on color gradients---consistent with its depthwise convolution design that excels at local texture features. EfficientNet-B0's squeeze-and-excitation blocks enable attention to multi-scale diagnostic regions, which contributes to its superior accuracy. ShuffleNetV2's channel shuffle mechanism distributes attention more broadly across the image.
 
 \subsection{Comparison with Related Work}
 
@@ -288,6 +288,12 @@ D.~Machuve \textit{et al.}, ``Machine learning dataset for poultry diseases diag
 
 \bibitem{nagel2021}
 M.~Nagel \textit{et al.}, ``A white paper on neural network quantization,'' \textit{arXiv:2106.08295}, 2021.
+
+\bibitem{selvaraju2017}
+R.~R.~Selvaraju \textit{et al.}, ``Grad-CAM: Visual explanations from deep networks via gradient-based localization,'' in \emph{Proc. IEEE Int. Conf. Comput. Vis. (ICCV)}, 2017, pp.~618--626.
+
+\bibitem{deng2009}
+J.~Deng \textit{et al.}, ``ImageNet: A large-scale hierarchical image database,'' in \emph{Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2009, pp.~248--255.
 
 \bibitem{david2021}
 R.~David \textit{et al.}, ``TensorFlow Lite Micro: Embedded machine learning for TinyML systems,'' in \textit{Proc. Machine Learning and Systems (MLSys)}, 2021, pp.~800--815.
