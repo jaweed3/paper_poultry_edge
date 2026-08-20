@@ -58,7 +58,7 @@ Machuve~\textit{et al.}~introduced the foundational dataset of 6,812 PCR-verifie
 MobileNetV2~\cite{mobilenetv2} utilizes inverted residuals with linear bottlenecks and depthwise separable convolutions, achieving efficient feature extraction with 3.4M parameters. ShuffleNetV2~\cite{shufflenetv2} introduces channel shuffle operations for cross-channel information flow with only 1.26M parameters. EfficientNet~\cite{efficientnet} employs compound scaling to uniformly balance network depth, width, and resolution. Hoang~\textit{et al.}~recently compared seven lightweight architectures for plant disease detection, identifying hybrid designs as optimal for edge deployment~\cite{hoang2026}.
 
 \subsection{Model Quantization}
-INT8 quantization reduces model size by representing weights with 8-bit integers~\cite{jacob2018}. While theoretically achieving 4$\times$ compression, ONNX Runtime documentation~\cite{onnxruntime2024} explicitly notes that INT8 without hardware support (VNNI, Tensor Cores) may degrade performance due to quantize/dequantize overhead. Community reports confirm 10$\times$ slowdown on CPU~\cite{onnxruntime12854, onnxruntime6732}. Maulana and Ramasamy's systematic review further demonstrates that Quantization-Aware Training (QAT) consistently outperforms PTQ~\cite{maulana2026}.
+INT8 quantization reduces model size by representing weights with 8-bit integers~\cite{jacob2018}. While theoretically achieving 4$\times$ compression, ONNX Runtime documentation~\cite{onnxruntime2024} explicitly notes that INT8 without hardware support (VNNI, Tensor Cores) may degrade performance due to quantize/dequantize overhead. Community reports confirm 10$\times$ slowdown on CPU~\cite{onnxruntime12854, onnxruntime6732}. The white paper on quantization surveys why PTQ without calibration degrades on depthwise and SE layers~\cite{nagel2021}. Maulana and Ramasamy's systematic review further shows that Quantization-Aware Training (QAT) consistently outperforms PTQ~\cite{maulana2026}.
 
 \section{Methodology}
 
@@ -193,7 +193,7 @@ EfficientNet-B0 & 239 & 730 & 3.05$\times$ & 82 / 81 & 24.9\% & 23.0$\times$ / 2
 \end{tabular}}
 \end{table}
 
-\textbf{Proven bottleneck (Level-2, measured).} Table~\ref{tab:level2} quantifies why INT8 is slower, beyond documentation claims. Dynamic PTQ does not insert static QuantizeLinear/DequantizeLinear nodes; it expands each Conv (52--81) into a DynamicQuantizeLinear + ConvInteger + Mul (scale) + Cast pattern, so node count grows by 1.37--3.05$\times$. ORT kernel profiling on RPi5 (batch=1, 1 thread, 10 runs) shows \texttt{Conv\_quant\_kernel} alone consumes 49.5--55.1\% of total time, and all quant-related kernels (QuantizeLinear, scale Mul, Cast, bias-add) add 20.7--29.2\% overhead, while the final \texttt{Gemm\_MatMul\_quant} is $<$0.1\%. The ranking matches the slowdown ranking: MobileNetV2 (29.2\% overhead, 2.86$\times$ expansion) suffers most, ShuffleNetV2 (20.7\%, 1.37$\times$) least. Artifact \texttt{level2\_profiling\_artifact.json} contains per-operator $\mu$s and full op counts (reproducible).
+\textbf{Proven bottleneck (Level-2, measured).} Table~\ref{tab:level2} quantifies why INT8 is slower, beyond documentation claims. Dynamic PTQ does not insert static QuantizeLinear/DequantizeLinear nodes; it expands each Conv (52--81) into a DynamicQuantizeLinear + ConvInteger + Mul (scale) + Cast pattern, so node count grows by 1.37--3.05$\times$. ORT kernel profiling on RPi5 (batch=1, 1 thread, 10 runs) shows \texttt{Conv\_quant\_kernel} alone consumes 49.5--55.1\% of total time, and all quant-related kernels (QuantizeLinear, scale Mul, Cast, bias-add) add 20.7--29.2\% overhead, while the final \texttt{Gemm\_MatMul\_quant} is $<$0.1\%. The ranking matches the slowdown ranking: MobileNetV2 (29.2\% overhead, 2.86$\times$ expansion) suffers most, ShuffleNetV2 (20.7\%, 1.37$\times$) least. Artifact \texttt{level2\_profiling\_artifact.json} contains per-operator $\mu$s and full op counts (reproducible), complementing TinyML system studies~\cite{david2021}.
 
 \subsection{Pareto Frontier Analysis}
 
@@ -247,7 +247,7 @@ Our accuracy (98.3\%) is competitive with prior results on the same dataset whil
 
 \section{Conclusion}
 
-This paper characterizes of lightweight CNN architectures with INT8 quantization for poultry fecal disease detection. Our key findings are:
+This paper characterizes lightweight CNN architectures with INT8 quantization for poultry fecal disease detection. Our key findings are:
 
 \begin{enumerate}
  \item All three lightweight architectures achieve over 97\% accuracy through ImageNet transfer learning, with EfficientNet-B0 reaching 98.3\%.
@@ -302,6 +302,12 @@ Microsoft, ``Quantize ONNX models,'' ONNX Runtime Documentation, 2024. [Online].
 
 \bibitem{machuve22}
 D.~Machuve \textit{et al.}, ``Machine learning dataset for poultry diseases diagnostics,'' Zenodo, 2022. DOI: 10.5281/zenodo.4628934.
+
+\bibitem{nagel2021}
+M.~Nagel \textit{et al.}, ``A white paper on neural network quantization,'' \textit{arXiv:2106.08295}, 2021.
+
+\bibitem{david2021}
+R.~David \textit{et al.}, ``TensorFlow Lite Micro: Embedded machine learning for TinyML systems,'' in \textit{Proc. Machine Learning and Systems (MLSys)}, 2021, pp.~800--815.
 
 \end{thebibliography}
 
