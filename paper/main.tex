@@ -47,12 +47,7 @@ Lightweight CNNs---MobileNetV2~\cite{mobilenetv2}, ShuffleNetV2~\cite{shufflenet
 
 This paper addresses three research questions: (1) How do lightweight CNN architectures compare for poultry fecal disease classification? (2) What is the quantization sensitivity of each architecture under INT8 PTQ on CPU? (3) What is the accuracy-latency Pareto frontier for edge deployment?
 
-Our contributions are:
-\begin{itemize}
- \item Systematic comparison of three lightweight CNNs under INT8 PTQ for poultry fecal disease detection, validated on x86 and ARM (Raspberry Pi~5).
- \item Measurement that INT8 PTQ increases latency by 6--30$\times$ on x86 and 1.9--2.8$\times$ on ARM; on ARM, INT8 scales by only 1.1--1.2$\times$ from 1 to 4 threads versus 2.3$\times$ for FP32.
- \item Hardware-aware deployment guidelines grounded in cross-platform characterization (latency, thread scaling, batch scaling, memory) and a Pareto/interpretability analysis.
-\end{itemize}
+The main contributions of this paper are summarized as follows. First, we present a systematic comparison of three lightweight CNNs under INT8 PTQ for poultry fecal disease detection, validated on both x86 and ARM (Raspberry Pi~5) with 96 thread and batch configurations. Second, we measure that INT8 PTQ increases latency by 6--30$\times$ on x86 and 1.9--2.8$\times$ on ARM and show that, on ARM, INT8 throughput scales by only 1.1--1.2$\times$ from 1 to 4 threads versus 2.3$\times$ for FP32. Third, we provide hardware-aware deployment guidelines grounded in cross-platform latency, thread scaling, batch scaling, memory, and Pareto and interpretability analysis.
 
 \section{Related Work}
 
@@ -71,13 +66,7 @@ INT8 quantization reduces model size by representing weights with 8-bit integers
 We use the Machuve~\textit{et al.}~dataset~\cite{machuve22} with PCR-verified fecal images from Tanzanian farms, as distributed via HuggingFace~\texttt{Dianyo/poultry-fecal-fl}. The HF split has 8,770 images (5,614 train / 1,402 val / 1,754 test, stratified) derived from Zenodo 4628934 (6,812 images: cocci 2,103, healthy 2,057, salmo 2,276, ncd 376); 1,958 additional images are augmented copies. Classes are Coccidiosis (30.7\%), Healthy (29.2\%), Salmonella (32.5\%), and Newcastle Disease (8.3\% raw; 5.5\% of Zenodo). NCD is underrepresented; we report per-class INT8 accuracy as a limitation. Images are resized to 224$\times$224 and normalized with ImageNet mean/std.
 
 \subsection{Model Architectures}
-Three lightweight architectures are evaluated, all pre-trained on ImageNet with classification heads replaced for 4-class output:
-
-\begin{itemize}
- \item \textbf{MobileNetV2}~\cite{mobilenetv2}: 2.2M parameters, inverted residuals with depthwise separable convolutions.
- \item \textbf{ShuffleNetV2}~\cite{shufflenetv2}: 1.26M parameters, channel shuffle mechanism for efficient feature mixing.
- \item \textbf{EfficientNet-B0}~\cite{efficientnet}: 4.0M parameters, compound scaling with squeeze-and-excitation blocks.
-\end{itemize}
+We evaluate three ImageNet-pretrained lightweight architectures with the classification head replaced for four classes. MobileNetV2~\cite{mobilenetv2} (2.2M parameters) uses inverted residuals with depthwise separable convolutions for efficient local feature extraction. ShuffleNetV2~\cite{shufflenetv2} (1.3M parameters) relies on channel shuffle for cross-channel mixing with few parameters. EfficientNet-B0~\cite{efficientnet} (4.0M parameters) applies compound scaling with squeeze-and-excitation blocks to capture multi-scale features.
 
 \subsection{Training Protocol}
 All models are trained for 50 epochs using Adam optimizer (learning rate $10^{-4}$, weight decay $10^{-4}$) with cosine annealing schedule. Batch size is 32, input resolution $224 \times 224$. Data augmentation includes random horizontal flip, rotation ($\pm 15^\circ$), and color jitter. Training is performed on an NVIDIA RTX 4060 GPU with 8\,GB VRAM using PyTorch 2.5.1 with CUDA 12.1.
@@ -209,12 +198,7 @@ EfficientNet-B0 & 239 & 730 & 3.05$\times$ & 82 / 81 & 24.9\% & 23.0$\times$ / 2
 \label{fig:pareto}
 \end{figure}
 
-The Pareto frontier (Fig.~\ref{fig:pareto}) reveals clear trade-offs:
-\begin{itemize}
- \item \textbf{Latency-critical} (real-time video): MobileNetV2 FP32 at 1.85\,ms (541\,FPS).
- \item \textbf{Memory-constrained} (MCU/embedded): ShuffleNetV2 INT8 at 1.47\,MB.
- \item \textbf{Accuracy-critical} (veterinary diagnosis): EfficientNet-B0 FP32 at 98.3\%.
-\end{itemize}
+The Pareto frontier (Fig.~\ref{fig:pareto}) shows that the best latency is MobileNetV2 FP32 at 1.85\,ms (541\,FPS) for real-time video, the smallest model is ShuffleNetV2 INT8 at 1.47\,MB for memory-constrained deployment, and the highest accuracy is EfficientNet-B0 FP32 at 98.3\% for veterinary diagnosis.
 
 The gap between best and worst accuracy is only 0.9\% (97.4\% versus 98.3\%); hardware constraints should drive model choice for deployment.
 
@@ -254,13 +238,7 @@ Our accuracy (98.3\%) is competitive with prior results on the same dataset whil
 
 This paper characterizes lightweight CNN architectures with INT8 quantization for poultry fecal disease detection. Our key findings are:
 
-\begin{enumerate}
- \item All three lightweight architectures achieve over 97\% accuracy through ImageNet transfer learning, with EfficientNet-B0 reaching 98.3\%.
- \item INT8 PTQ on CPU introduces 6.4--30.1$\times$ latency overhead on x86 and 1.9--2.8$\times$ on RPi5, challenging the assumption that quantization universally improves inference speed; INT8 thread scaling stalls at 1.1--1.2$\times$ on ARM versus 2.3$\times$ for FP32.
- \item ShuffleNetV2 exhibits the most resilient quantization behavior (6.4$\times$ on x86, 1.89$\times$ on RPi5) due to architectural homogeneity.
- \item On RPi5, batch=1 streaming is optimal (per-image latency and RSS both increase with batch), and INT8 file-size reduction (3.3--3.7$\times$) does not translate to lower runtime RSS.
- \item The Pareto frontier identifies MobileNetV2 as optimal for latency-critical deployment (1.85\,ms, 541\,FPS on x86; 6.26\,ms, 159.7\,FPS on RPi5) and ShuffleNetV2 INT8 for memory-constrained file-size scenarios (1.47\,MB).
-\end{enumerate}
+All three architectures exceed 97\% accuracy with ImageNet transfer learning, with EfficientNet-B0 at 98.3\%. INT8 PTQ increases latency by 6.4--30.1$\times$ on x86 and 1.9--2.8$\times$ on RPi5; on ARM, INT8 scales by only 1.1--1.2$\times$ from 1 to 4 threads versus 2.3$\times$ for FP32. ShuffleNetV2 degrades least (6.4$\times$ on x86, 1.89$\times$ on RPi5) due to its homogeneous design. On RPi5, batch 1 is optimal and INT8 size reduction (3.3--3.7$\times$) does not reduce runtime RSS. The Pareto analysis identifies MobileNetV2 FP32 for latency-critical use (1.85\,ms on x86, 6.26\,ms on RPi5) and ShuffleNetV2 INT8 for size-constrained use (1.47\,MB).
 
 These findings enable practitioners to make informed deployment decisions based on their specific hardware constraints. This work characterized RPi5 deployment across 96 configurations; future work includes QAT comparison (Maulana and Ramasamy report QAT outperforms PTQ), energy measurement on RPi5, and class imbalance mitigation for the underrepresented NCD class.
 
