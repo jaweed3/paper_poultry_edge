@@ -13,3 +13,8 @@ wandb/
 releases_*/
 checksums.txt
 .DS_Store
+results/rpi5_benchmark/
+fp32/
+onnx/
+ptq/
+models_all.tar.gz

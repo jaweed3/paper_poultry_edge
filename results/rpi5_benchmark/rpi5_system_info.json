@@ -1,0 +1,27 @@
+{
+  "hostname": "techronity",
+  "os": "Debian GNU/Linux 13 (trixie)",
+  "kernel": "6.18.34+rpt-rpi-2712",
+  "architecture": "aarch64",
+  "cpu_model": "processor\t: 0",
+  "cpu_cores": 4,
+  "ram_total_mb": 8062.4,
+  "ram_available_mb": 6788.8,
+  "thermal_zone": "44650",
+  "thermal_type": "cpu-thermal",
+  "gpu_temp": "temp=45.0'C",
+  "voltage_core": "volt=0.8543V",
+  "throttled": "throttled=0x0",
+  "onnxruntime_version": "1.29.0",
+  "providers": [
+    "AzureExecutionProvider",
+    "CPUExecutionProvider"
+  ],
+  "temp_initial_c": 44.1,
+  "power_initial": {
+    "voltage_v": 0.8543,
+    "current_a": null,
+    "power_w": null
+  },
+  "timestamp": "2026-08-20T07:03:43.410249"
+}
