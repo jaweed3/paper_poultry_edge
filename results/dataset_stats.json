@@ -1,0 +1,29 @@
+{
+  "total": 6812,
+  "per_class": {
+    "cocci": 2103,
+    "healthy": 2057,
+    "salmo": 2276,
+    "ncd": 376
+  },
+  "per_class_pct": {
+    "cocci": 30.87,
+    "healthy": 30.19,
+    "salmo": 33.41,
+    "ncd": 5.52
+  },
+  "source": "Zenodo 4628934 (Machuve et al. 2021) - verified via https://zenodo.org/api/records/4628934",
+  "files": {
+    "cocci.zip": 2103,
+    "healthy.zip": 2057,
+    "salmo.zip": 2276,
+    "ncd.zip": 376,
+    "imgSegmentation.zip": 2862560141
+  },
+  "note": "Local data/ still empty - dataset not yet downloaded due to Zenodo 403 rate-limit. Stats above are ground truth from API.",
+  "local_scanned": {
+    "total": 0,
+    "per_class": {},
+    "scanned_root": "/Users/wedjaw/research/paper_poultry_edge/data"
+  }
+}
