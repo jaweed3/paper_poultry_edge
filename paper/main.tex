@@ -25,7 +25,7 @@ Email: fatihalmumtaz76@student.cs.unida.gontor.ac.id}
 \maketitle
 
 \begin{abstract}
-Poultry fecal disease detection using deep learning has demonstrated promising accuracy, yet existing approaches predominantly rely on cloud-based inference with heavy architectures that are impractical for resource-constrained farm environments. This paper presents a systematic characterization of three lightweight convolutional neural network architectures---MobileNetV2, ShuffleNetV2, and EfficientNet-B0---for classifying poultry fecal images into four disease categories: Coccidiosis, Salmonellosis, Newcastle Disease, and Healthy. Experiments use the Machuve \textit{et al.} dataset as distributed via HuggingFace \texttt{Dianyo/poultry-fecal-fl} (8,770 images: 5,614 train / 1,402 val / 1,754 test, augmented from the original Zenodo 6,812). We evaluate each architecture under post-training INT8 dynamic quantization (ONNX Runtime) and construct an accuracy-latency Pareto frontier on Intel i5-12400F CPU (200 runs, 10 warmup, CPUExecutionProvider). All three architectures achieve over 97\% FP32 test accuracy through ImageNet transfer learning, with EfficientNet-B0 highest at 98.18\% and MobileNetV2 best latency-accuracy trade-off (1.85\,ms FP32, 540.8\,FPS). Critically, INT8 PTQ introduces 6.4--30.1$\times$ latency overhead on CPU due to dequantization costs, and exhibits architecture-dependent accuracy: MobileNetV2 (+0.23\%) and ShuffleNetV2 (+0.06\%) are robust, while EfficientNet-B0 collapses from 98.18\% to 35.46\% (62.7\% drop, Salmonellosis 0.53\%) due to squeeze-and-excitation sensitivity. Grad-CAM visualizations reveal distinct feature representations per architecture. These findings provide hardware-aware deployment guidelines for edge-based poultry disease detection.
+Poultry fecal disease detection using deep learning has demonstrated promising accuracy, yet existing approaches predominantly rely on cloud-based inference with heavy architectures that are impractical for resource-constrained farm environments. This paper presents a systematic characterization of three lightweight convolutional neural network architectures---MobileNetV2, ShuffleNetV2, and EfficientNet-B0---for classifying poultry fecal images into four disease categories: Coccidiosis, Salmonellosis, Newcastle Disease, and Healthy. Experiments use the Machuve \textit{et al.} dataset as distributed via HuggingFace \texttt{Dianyo/poultry-fecal-fl} (8,770 images: 5,614 train / 1,402 val / 1,754 test, augmented from the original Zenodo 6,812). We evaluate each architecture under post-training INT8 dynamic quantization (ONNX Runtime) on an Intel i5-12400F CPU (200 runs, 10 warmup, CPUExecutionProvider) and on a Raspberry Pi~5 (Broadcom BCM2712, 4$\times$ Cortex-A76, Debian 13, ONNX Runtime 1.29.0, 96 thread/batch configurations). All three architectures achieve over 97\% FP32 test accuracy through ImageNet transfer learning, with EfficientNet-B0 highest at 98.18\% and MobileNetV2 best latency-accuracy trade-off (1.85\,ms FP32, 540.8\,FPS on x86). Critically, INT8 PTQ introduces 6.4--30.1$\times$ latency overhead on x86 CPU and 1.9--2.8$\times$ on RPi5 due to dequantization costs, and INT8 thread scaling stalls at 1.1--1.2$\times$ (1$\rightarrow$4 threads) versus 2.3$\times$ for FP32, revealing poor ARM INT8 parallelization. Accuracy exhibits architecture-dependent sensitivity: MobileNetV2 (+0.23\%) and ShuffleNetV2 (+0.06\%) are robust, while EfficientNet-B0 collapses from 98.18\% to 35.46\% (62.7\% drop, Salmonellosis 0.53\%) due to squeeze-and-excitation sensitivity. Grad-CAM visualizations reveal distinct feature representations per architecture. These findings provide hardware-aware deployment guidelines for edge-based poultry disease detection.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -44,9 +44,9 @@ This paper addresses three research questions: (1) How do lightweight CNN archit
 
 Our contributions are:
 \begin{itemize}
-    \item First systematic comparison of three lightweight CNNs with INT8 quantization characterization for poultry fecal disease detection.
-    \item Empirical demonstration that INT8 PTQ on CPU introduces 6--30$\times$ latency overhead, challenging the assumption that quantization universally improves inference speed.
-    \item Accuracy-latency Pareto frontier analysis enabling hardware-aware model selection for farm-level deployment.
+    \item First systematic comparison of three lightweight CNNs with INT8 quantization characterization for poultry fecal disease detection, validated on both x86 and ARM (Raspberry Pi~5).
+    \item Empirical demonstration that INT8 PTQ on CPU introduces 6--30$\times$ latency overhead on x86 and 1.9--2.8$\times$ on ARM, challenging the assumption that quantization universally improves inference speed; INT8 thread scaling on ARM stalls at 1.1--1.2$\times$ versus 2.3$\times$ for FP32.
+    \item Hardware-aware deployment guidelines grounded in cross-platform characterization (latency, thread scaling, batch scaling, memory) and a Pareto/interpretability analysis.
 \end{itemize}
 
 \section{Related Work}
@@ -77,8 +77,11 @@ Three lightweight architectures are evaluated, all pre-trained on ImageNet with 
 \subsection{Training Protocol}
 All models are trained for 50 epochs using Adam optimizer (learning rate $10^{-4}$, weight decay $10^{-4}$) with cosine annealing schedule. Batch size is 32, input resolution $224 \times 224$. Data augmentation includes random horizontal flip, rotation ($\pm 15^\circ$), and color jitter. Training is performed on an NVIDIA RTX 4060 GPU with 8\,GB VRAM using PyTorch 2.5.1 with CUDA 12.1.
 
-\subsection{Quantization and Benchmarking}
-Models are exported to ONNX format and quantized using ONNX Runtime's dynamic quantization to INT8. Latency benchmarks are conducted on an Intel i5-12400F CPU using CPU Execution Provider, averaging 200 inference runs after 10 warmup iterations. We measure mean latency, P50 latency, and throughput (FPS).
+\subsection{Quantization and Benchmarking (x86)}
+Models are exported to ONNX and quantized with ONNX Runtime dynamic per-tensor INT8 (CPUExecutionProvider, no calibration dataset; weights quantized to INT8, activations dynamically quantized at runtime). This matches the stock ORT PTQ path and explains the architecture-dependent accuracy drop (notably EfficientNet-B0 SE sensitivity). x86 latency is measured on an Intel i5-12400F CPU (CPUExecutionProvider) with 200 runs and 10 warmup iterations per model; we report mean, P50, P95, P99, throughput (FPS), and model size. Power is not measured on x86.
+
+\subsection{Edge Deployment on Raspberry Pi~5}
+We characterize the same ONNX FP32 and INT8 models on a Raspberry Pi~5 (Broadcom BCM2712, 4$\times$ Cortex-A76 at 2.4\,GHz, 8\,GB LPDDR4X, Debian 13 trixie, kernel 6.18.34+rpt-rpi-2712, aarch64, \texttt{performance} governor, throttled=0x0). ONNX Runtime 1.29.0 is used with only \texttt{CPUExecutionProvider} (no NPU/GPU; \texttt{AzureExecutionProvider} listed but unused). The benchmark (\texttt{benchmark\_rpi5.py}) sweeps 96 configurations: 3 models $\times$ 2 quantizations (FP32/INT8) $\times$ 4 thread counts (1--4 via \texttt{intra\_op\_num\_threads}) $\times$ 4 batch sizes (1,4,8,16), with input 3$\times$224$\times$224. A Level-2 profiling artifact (ORT kernel timing, 10 runs, batch=1, 1 thread) and Q/DQ node counts are available at \texttt{results/profiling/level2\_artifact.json} (supplementary). Each configuration runs 200 iterations after 10 warmup iterations, reporting mean/std/P50/P95/P99 latency, throughput, RSS memory (mean/peak), CPU\%, and die temperature before/after. Initial temperature was 44.1$^{\circ}$C; peak during the sweep was 57.9$^{\circ}$C. Current/power telemetry was unavailable (\texttt{current\_a=null}) on this board, so energy is discussed as a limitation. All 96/96 runs completed without thermal throttling, enabling a controlled thread- and batch-scaling analysis.
 
 \section{Results and Discussion}
 
@@ -128,6 +131,69 @@ EfficientNet-B0 & 15.3 & 4.16 & 3.50 & 80.66 & 23.0$\times$ \\
 \textbf{Critical finding:} INT8 quantization on CPU introduces 6.4--30.1$\times$ latency overhead compared to FP32. This is because ONNX Runtime's CPU Execution Provider must perform dequantization (INT8$\rightarrow$FP32) before each matrix multiplication, negating the theoretical benefits of lower-precision arithmetic. This finding aligns with ONNX Runtime documentation~\cite{onnxruntime2024} and community reports~\cite{onnxruntime12854}, but is the first empirical demonstration in the poultry disease detection domain.
 
 ShuffleNetV2 exhibits the most resilient quantization behavior (6.4$\times$ slowdown vs.\ 30.2$\times$ for MobileNetV2). We attribute this to ShuffleNetV2's architectural homogeneity---channel shuffle operations are non-parametric and less sensitive to weight precision degradation, while MobileNetV2's depthwise separable convolutions create quantization-sensitive bottlenecks.
+
+\subsection{Raspberry Pi~5 Characterization: Thread Scaling and the INT8 Bottleneck}
+Table~\ref{tab:rpi5} and Fig.~\ref{fig:rpi5thread} summarize RPi5 latency at batch=1, the realistic streaming mode for farm deployment. FP32 scales with threads: MobileNetV2 drops from 33.13\,ms (1 thread, 30.2\,FPS) to 14.35\,ms (4 threads, 69.7\,FPS, 2.31$\times$ speedup, 57.7\% parallel efficiency); ShuffleNetV2 from 14.20\,ms to 6.26\,ms (2.27$\times$, 159.7\,FPS); EfficientNet-B0 from 70.06\,ms to 31.20\,ms (2.25$\times$). The sweet spot is 3 threads (e.g., MobileNetV2 14.99\,ms at 3 threads vs.\ 14.35\,ms at 4 threads with higher variance, std 1.53\,ms), indicating diminishing returns beyond 3 threads for FP32.
+
+\begin{table}[htbp]
+\caption{Raspberry Pi~5 Latency, batch=1 (mean of 200 runs, P50 in parentheses). All runs at 44--58$^{\circ}$C, throttled=0x0; std $<$1.6\,ms except 4-thread tails.}
+\label{tab:rpi5}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3.2pt}
+\resizebox{\linewidth}{!}{\begin{tabular}{lcccccc}
+\toprule
+Model & Quant & t=1 & t=2 & t=3 & t=4 & FP32$\to$INT8 \\
+ & & (ms) & (ms) & (ms) & (ms) & t=4 \\
+\midrule
+MobileNetV2 & FP32 & 33.13 (33.06) & 19.07 (18.98) & 14.99 (14.90) & \textbf{14.35} (14.06) & --- \\
+ & INT8 & 43.95 (43.82) & 38.10 (37.98) & 37.45 (37.30) & 39.56 (39.12) & 2.76$\times$ slower \\
+ShuffleNetV2 & FP32 & 14.20 (14.18) & 8.38 (8.36) & 6.64 (6.61) & \textbf{6.26} (6.18) & --- \\
+ & INT8 & 13.55 (13.52) & 11.89 (11.86) & 11.51 (11.48) & 11.82 (11.71) & 1.89$\times$ slower \\
+EfficientNet-B0 & FP32 & 70.06 (69.95) & 39.80 (39.68) & 31.90 (31.72) & \textbf{31.20} (30.88) & --- \\
+ & INT8 & 76.65 (76.52) & 63.73 (63.58) & 61.39 (61.18) & 64.66 (64.22) & 2.07$\times$ slower \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+INT8 on RPi5 is not only slower than FP32 at the optimal thread count (1.89--2.76$\times$), but its thread scaling stalls: from 1$\rightarrow$4 threads MobileNetV2 INT8 improves only 1.11$\times$ (43.95$\rightarrow$39.56\,ms, 27.8\% efficiency), ShuffleNetV2 1.15$\times$ (28.7\%), EfficientNet-B0 1.19$\times$ (29.6\%), versus 2.25--2.31$\times$ (56--58\%) for FP32. This reveals poor ARM INT8 parallelization in ONNX Runtime 1.29.0's CPU kernels on Cortex-A76.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\linewidth]{rpi5_thread_scaling.png}
+\caption{RPi5 thread scaling at batch=1. FP32 (solid) scales to 3--4 threads; INT8 (dashed) is flat and slower than FP32 at every thread count. The gap quantifies the dequantization bottleneck.}
+\label{fig:rpi5thread}
+\end{figure}
+
+\textbf{Why INT8 is slower: evidence, not buzzwords.} On CPUExecutionProvider without VNNI (x86) or DOTPROD/NEON INT8 matmul acceleration, ORT inserts QuantizeLinear/DequantizeLinear nodes and executes the heavy matmuls in FP32 after dequantizing activations. Thus INT8 adds work (quant/dequant + shape dispatch) without reducing the matmul cost. The cost is proportional to the number of quantize boundaries: depthwise separable + SE blocks (MobileNetV2, EfficientNet-B0) create many small matmuls and are hit hardest (30.1$\times$ on x86, 2.76$\times$ on ARM), while homogeneous channel-shuffle blocks (ShuffleNetV2) are most resilient (6.4$\times$ / 1.89$\times$). The flat thread scaling further supports a kernel-level bottleneck: dequantize is memory-bound and poorly parallelized, so adding threads does not help, unlike FP32 GEMM which is compute-bound and scales.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\linewidth]{rpi5_batch_scaling.png}
+\caption{Batch scaling on RPi5 (MobileNetV2 FP32, 1 thread). Total latency grows linearly with batch, per-image latency increases (33.13\,ms at b=1 $\rightarrow$ 36.92\,ms at b=16), and RSS memory grows from 100\,MB to 292\,MB. For farm video streaming, batch=1 is optimal.}
+\label{fig:rpi5batch}
+\end{figure}
+
+\textbf{Batch=1 is optimal for edge streaming.} Fig.~\ref{fig:rpi5batch} shows that batching hurts on RPi5: for MobileNetV2 FP32 at 1 thread, per-image latency rises from 33.13\,ms (b=1) to 35.98\,ms (b=4), 36.85\,ms (b=8), 36.92\,ms (b=16), while RSS grows from 100\,MB to 292\,MB. Total latency scales linearly (143.9\,ms at b=4, 294.8\,ms at b=8, 590.7\,ms at b=16). This motivates single-frame streaming, not batching, for real-time farm deployment. Model file size shrinks 3.3--3.7$\times$ with INT8 (e.g., 8.48$\rightarrow$2.30\,MB for MobileNetV2), but runtime RSS is dominated by the ORT arena and is similar across quantizations ($\sim$124\,MB for MobileNetV2), so INT8 does not save RAM at inference on this stack---a practical caveat for memory claims.
+
+\begin{table}[htbp]
+\caption{Level-2 Provenance: Node Expansion and ORT Kernel Quant Overhead (RPi5, 10 profiling runs, batch=1, 1 thread). INT8 via dynamic PTQ expands to DynamicQuantizeLinear + ConvInteger + Mul pattern (no static Q/DQ nodes). Overhead correlates with expansion and slowdown.}
+\label{tab:level2}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3.0pt}
+\resizebox{\linewidth}{!}{\begin{tabular}{lcccccc}
+\toprule
+Model & FP32 nodes & INT8 nodes & Expansion & DynQuant/CvInt & Quant overhead & x86 / RPi5 slowdown \\
+\midrule
+MobileNetV2 & 170 & 487 & 2.86$\times$ & 53 / 52 & 29.2\% & 30.1$\times$ / 2.76$\times$ \\
+ShuffleNetV2 & 902 & 1240 & 1.37$\times$ & 54 / 56 & 20.7\% & 6.4$\times$ / 1.89$\times$ \\
+EfficientNet-B0 & 239 & 730 & 3.05$\times$ & 82 / 81 & 24.9\% & 23.0$\times$ / 2.07$\times$ \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\textbf{Proven bottleneck (Level-2, measured).} Table~\ref{tab:level2} quantifies why INT8 is slower, beyond documentation claims. Dynamic PTQ does not insert static QuantizeLinear/DequantizeLinear nodes; it expands each Conv (52--81) into a DynamicQuantizeLinear + ConvInteger + Mul (scale) + Cast pattern, so node count grows by 1.37--3.05$\times$. ORT kernel profiling on RPi5 (batch=1, 1 thread, 10 runs) shows \texttt{Conv\_quant\_kernel} alone consumes 49.5--55.1\% of total time, and all quant-related kernels (QuantizeLinear, scale Mul, Cast, bias-add) add 20.7--29.2\% overhead, while the final \texttt{Gemm\_MatMul\_quant} is $<$0.1\%. The ranking matches the slowdown ranking: MobileNetV2 (29.2\% overhead, 2.86$\times$ expansion) suffers most, ShuffleNetV2 (20.7\%, 1.37$\times$) least. Artifact \texttt{level2\_profiling\_artifact.json} contains per-operator $\mu$s and full op counts (reproducible).
 
 \subsection{Pareto Frontier Analysis}
 
@@ -185,12 +251,13 @@ This paper presents the first systematic characterization of lightweight CNN arc
 
 \begin{enumerate}
     \item All three lightweight architectures achieve over 97\% accuracy through ImageNet transfer learning, with EfficientNet-B0 reaching 98.3\%.
-    \item INT8 PTQ on CPU introduces 6.4--30.1$\times$ latency overhead, challenging the assumption that quantization universally improves inference speed.
-    \item ShuffleNetV2 exhibits the most resilient quantization behavior (6.4$\times$ slowdown) due to architectural homogeneity.
-    \item The Pareto frontier identifies MobileNetV2 as optimal for latency-critical deployment (1.85\,ms, 541\,FPS) and ShuffleNetV2 INT8 for memory-constrained scenarios (1.47\,MB).
+    \item INT8 PTQ on CPU introduces 6.4--30.1$\times$ latency overhead on x86 and 1.9--2.8$\times$ on RPi5, challenging the assumption that quantization universally improves inference speed; INT8 thread scaling stalls at 1.1--1.2$\times$ on ARM versus 2.3$\times$ for FP32.
+    \item ShuffleNetV2 exhibits the most resilient quantization behavior (6.4$\times$ on x86, 1.89$\times$ on RPi5) due to architectural homogeneity.
+    \item On RPi5, batch=1 streaming is optimal (per-image latency and RSS both increase with batch), and INT8 file-size reduction (3.3--3.7$\times$) does not translate to lower runtime RSS.
+    \item The Pareto frontier identifies MobileNetV2 as optimal for latency-critical deployment (1.85\,ms, 541\,FPS on x86; 6.26\,ms, 159.7\,FPS on RPi5) and ShuffleNetV2 INT8 for memory-constrained file-size scenarios (1.47\,MB).
 \end{enumerate}
 
-These findings enable practitioners to make informed deployment decisions based on their specific hardware constraints. Future work includes deployment on Raspberry Pi 5 and ESP32-S3, QAT comparison, and class imbalance mitigation for the underrepresented NCD class.
+These findings enable practitioners to make informed deployment decisions based on their specific hardware constraints. This work characterized RPi5 deployment across 96 configurations; future work includes QAT comparison (Maulana and Ramasamy report QAT outperforms PTQ), energy measurement on RPi5, and class imbalance mitigation for the underrepresented NCD class.
 
 \begin{thebibliography}{1}
 
