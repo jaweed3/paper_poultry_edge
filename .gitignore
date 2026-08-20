@@ -18,3 +18,4 @@ fp32/
 onnx/
 ptq/
 models_all.tar.gz
+results/profiling/profile_*.json
